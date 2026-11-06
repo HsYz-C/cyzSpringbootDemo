@@ -13,8 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -113,37 +111,24 @@ public class ApplicationServiceImpl implements ApplicationService {
         return Result.success("取消投递成功", null);
     }
 
+    /**
+     * 查询指定用户的全部投递记录（不区分状态）
+     */
     @Override
     public Result<List<Map<String, Object>>> listByUser(Long userId) {
-        if (userId == null) {
-            return Result.error("用户ID不能为空");
-        }
-
-        if (userMapper.selectById(userId) == null) {
-            return Result.error("用户不存在");
-        }
-
-        // 查询投递记录
-        LambdaQueryWrapper<Application> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Application::getUserId, userId);
-        List<Application> applications = applicationMapper.selectList(wrapper);
-
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (Application application : applications) {
-            Job job = jobMapper.selectById(application.getJobId());
-            if (job == null) {
-                continue;
-            }
-            Map<String, Object> info = new HashMap<>();
-            info.put("jobId", job.getId());
-            info.put("jobTitle", job.getJobTitle());
-            info.put("companyName", job.getCompanyName());
-            info.put("status", application.getStatus());
-            info.put("applyTime", application.getApplyTime());
-            info.put("cancelTime", application.getCancelTime());
-            result.add(info);
-        }
-
-        return Result.success(result);
+        return listDetail(userId, null);
     }
+
+    /**
+     * 查询投递记录，可按用户和状态过滤（参数为 null 时该条件不参与筛选）
+     */
+    @Override
+    public Result<List<Map<String, Object>>> listDetail(Long userId, Integer status) {
+        // 投递记录 + 用户 + 职位信息的联表查询，SQL 见 mapper/ApplicationMapper.xml
+        // userId 为空查询全部用户的投递记录，status 为空不按状态过滤
+        List<Map<String, Object>> list = applicationMapper.listDetail(userId, status);
+        return Result.success(list);
+    }
+
+
 }

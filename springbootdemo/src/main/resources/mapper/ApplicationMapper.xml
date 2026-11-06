@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.recruitment.mapper.ApplicationMapper">
+
+    <!--
+        resultType="map"：结果映射为 Map，不需要 DTO 类
+        注意：map-underscore-to-camel-case 对 map 无效，必须用 AS 手动指定驼峰别名
+    -->
+    <select id="listDetail" resultType="map">
+        SELECT
+        a.id,a.user_id AS userId,a.job_id AS jobId,a.status,
+        DATE_FORMAT(a.apply_time, '%Y-%m-%d %H:%i:%s') AS applyTime,
+        DATE_FORMAT(a.cancel_time, '%Y-%m-%d %H:%i:%s') AS cancelTime,
+        u.username,u.nickname,u.email,u.phone,
+        j.company_name AS companyName,j.job_title AS jobTitle,j.salary,j.city,j.address,j.experience,j.education
+        FROM application a
+        INNER JOIN user u ON a.user_id = u.id
+        INNER JOIN job  j ON a.job_id  = j.id
+        <where>
+            <if test="userId != null">
+                AND a.user_id = #{userId}
+            </if>
+            <if test="status != null">
+                AND a.status = #{status}
+            </if>
+        </where>
+
+        ORDER BY a.apply_time DESC
+    </select>
+
+</mapper>

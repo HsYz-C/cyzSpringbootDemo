@@ -15,9 +15,16 @@ spring:
 
 # 新增：MyBatis Plus 配置
 mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
   configuration:
     map-underscore-to-camel-case: true    # 驼峰命名转换
+    call-setters-on-nulls: true           # 查询结果为 Map 时保留 null 字段（如 cancelTime）
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # SQL日志输出
   global-config:
     db-config:
       id-type: auto                        # 主键自增
+
+# JWT配置
+jwt:
+  secret: recruitment-website-jwt-secret-key-2024-web-architecture-course
+  expiration: 604800000  # 7天（毫秒）

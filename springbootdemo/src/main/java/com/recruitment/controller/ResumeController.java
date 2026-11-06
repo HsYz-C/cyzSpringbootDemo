@@ -3,6 +3,9 @@ package com.recruitment.controller;
 import com.recruitment.common.Result;
 import com.recruitment.model.Resume;
 import com.recruitment.service.ResumeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +17,7 @@ import java.util.List;
  *
  * @author Web架构技术教学组
  */
+@Tag(name = "简历管理", description = "简历增删改查接口")
 @RestController
 @RequestMapping("/resumes")
 public class ResumeController {
@@ -25,6 +29,7 @@ public class ResumeController {
      * 创建简历
      * POST /api/resumes
      */
+    @Operation(summary = "创建简历", description = "为指定用户创建简历")
     @PostMapping
     public Result<Resume> create(@RequestBody Resume resume) {
         return resumeService.create(resume);
@@ -34,8 +39,11 @@ public class ResumeController {
      * 获取简历详情
      * GET /api/resumes/{id}
      */
+    @Operation(summary = "获取简历详情", description = "根据简历ID查询简历")
     @GetMapping("/{id}")
-    public Result<Resume> getById(@PathVariable Long id) {
+    public Result<Resume> getById(
+            @Parameter(description = "简历ID", example = "1")
+            @PathVariable Long id) {
         return resumeService.getById(id);
     }
 
@@ -43,8 +51,12 @@ public class ResumeController {
      * 更新简历
      * PUT /api/resumes/{id}
      */
+    @Operation(summary = "更新简历", description = "根据简历ID更新简历信息")
     @PutMapping("/{id}")
-    public Result<Resume> update(@PathVariable Long id, @RequestBody Resume resume) {
+    public Result<Resume> update(
+            @Parameter(description = "简历ID", example = "1")
+            @PathVariable Long id,
+            @RequestBody Resume resume) {
         return resumeService.update(id, resume);
     }
 
@@ -52,8 +64,11 @@ public class ResumeController {
      * 删除简历
      * DELETE /api/resumes/{id}
      */
+    @Operation(summary = "删除简历", description = "根据简历ID删除简历")
     @DeleteMapping("/{id}")
-    public Result<String> delete(@PathVariable Long id) {
+    public Result<String> delete(
+            @Parameter(description = "简历ID", example = "1")
+            @PathVariable Long id) {
         return resumeService.delete(id);
     }
 
@@ -61,8 +76,11 @@ public class ResumeController {
      * 获取用户的简历列表
      * GET /api/resumes/list?userId=1
      */
+    @Operation(summary = "获取用户简历列表", description = "查询指定用户的全部简历")
     @GetMapping("/list")
-    public Result<List<Resume>> listByUserId(@RequestParam Long userId) {
+    public Result<List<Resume>> listByUserId(
+            @Parameter(description = "用户ID", example = "1")
+            @RequestParam Long userId) {
         return resumeService.listByUserId(userId);
     }
 }

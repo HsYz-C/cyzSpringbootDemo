@@ -5,6 +5,8 @@ import com.recruitment.common.Result;
 import com.recruitment.mapper.UserMapper;
 import com.recruitment.model.User;
 import com.recruitment.service.UserService;
+import com.recruitment.util.JwtUtil;
+import com.recruitment.vo.LoginVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserMapper userMapper;  // 注入 Mapper
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Override
     public Result<User> register(User request) {
@@ -52,11 +57,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Result<User> login(User request) {
+    public Result<LoginVO> login(User request) {
         /*登录：
          * 1.判断用户名或密码是否为空
-         * 用户名在mock数据中是否存在
-         * 判断密码是否匹配*/
+         * 2.查询用户是否存在
+         * 3.使用 BCrypt 校验密码
+         * 4.校验通过后生成 JWT Token，与脱敏后的用户信息一起返回*/
         if (request == null || isBlank(request.getUsername()) ||
                 isBlank(request.getPassword())){
             return Result.error(500,"用户名或密码不能为空");
@@ -71,9 +77,14 @@ public class UserServiceImpl implements UserService {
         //使用BCrypt验证密码（不能直接用eq，用match）
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         if(user==null||!encoder.matches(request.getPassword(),user.getPassword())){
-            return Result.error(500,"密码错误");
+            return Result.error(500,"用户名或密码错误");
         }
-        return Result.success(user);
+
+        // 生成JWT Token
+        String token = jwtUtil.generateToken(user.getId());
+        LoginVO loginVO = new LoginVO(token, maskPassword(user));
+
+        return Result.success(loginVO);
     }
 
 

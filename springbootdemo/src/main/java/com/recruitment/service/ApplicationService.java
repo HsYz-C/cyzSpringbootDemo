@@ -12,4 +12,5 @@ public interface ApplicationService {
     Result<String> apply(Long userId, Long jobId);
     Result<String> cancel(Long userId, Long jobId);
     Result<List<Map<String, Object>>> listByUser(Long userId);
+    Result<List<Map<String, Object>>> listDetail(Long userId, Integer status);
 }
