@@ -97,6 +97,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- AOP 角色权限 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

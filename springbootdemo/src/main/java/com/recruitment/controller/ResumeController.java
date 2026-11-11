@@ -1,5 +1,6 @@
 package com.recruitment.controller;
 
+import com.recruitment.annotation.RequireRole;
 import com.recruitment.common.Result;
 import com.recruitment.model.Resume;
 import com.recruitment.service.ResumeService;
@@ -73,10 +74,13 @@ public class ResumeController {
     }
 
     /**
-     * 获取用户的简历列表
+     * 获取用户的简历列表（课堂测试任务10：查询无简历用户）
      * GET /api/resumes/list?userId=1
+     *
+     * 需要登录，且角色必须为 Recruiter（ADMIN 自动放行）
      */
-    @Operation(summary = "获取用户简历列表", description = "查询指定用户的全部简历")
+    @RequireRole("Recruiter")
+    @Operation(summary = "获取用户简历列表", description = "查询指定用户的全部简历；需要 JWT 且角色为 Recruiter")
     @GetMapping("/list")
     public Result<List<Resume>> listByUserId(
             @Parameter(description = "用户ID", example = "1")

@@ -39,9 +39,10 @@ public class JwtInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // 4. 存入上下文
+        // 4. 存入上下文（用户ID + 角色）
         Long userId = jwtUtil.getUserIdFromToken(token);
-        UserContext.setCurrentUserId(userId);
+        String role = jwtUtil.getRoleFromToken(token);
+        UserContext.setCurrentUser(userId, role);
 
         return true;
     }

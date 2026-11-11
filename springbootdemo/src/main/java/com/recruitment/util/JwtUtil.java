@@ -30,13 +30,17 @@ public class JwtUtil {
 
     /**
      * 生成Token
+     *
+     * @param userId 用户ID
+     * @param role   角色（USER / ADMIN），会写入 token payload
      */
-    public String generateToken(Long userId) {
+    public String generateToken(Long userId, String role) {
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
                 .subject(userId.toString())
+                .claim("role", role)  // 把角色写入 token payload
                 .issuedAt(now)
                 .expiration(expirationDate)
                 .signWith(getSigningKey())
@@ -69,6 +73,22 @@ public class JwtUtil {
                     .parseSignedClaims(token)
                     .getPayload();
             return Long.parseLong(claims.getSubject());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 从 token 解析角色
+     */
+    public String getRoleFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.get("role", String.class);
         } catch (Exception e) {
             return null;
         }

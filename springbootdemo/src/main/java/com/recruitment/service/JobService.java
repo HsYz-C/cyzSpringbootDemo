@@ -2,6 +2,7 @@ package com.recruitment.service;
 
 import com.recruitment.common.Result;
 import com.recruitment.model.Job;
+
 import java.util.List;
 
 /**
@@ -11,4 +12,6 @@ import java.util.List;
 public interface JobService {
     Result<List<Job>> list(String city, String keyword);
     Result<Job> detail(Long id);
+    Result<Job> add(Job job);
+    Result<Void> delete(Long id);
 }

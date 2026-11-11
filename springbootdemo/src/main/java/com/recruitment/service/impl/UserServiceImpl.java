@@ -80,8 +80,8 @@ public class UserServiceImpl implements UserService {
             return Result.error(500,"用户名或密码错误");
         }
 
-        // 生成JWT Token
-        String token = jwtUtil.generateToken(user.getId());
+        // 生成JWT Token（角色写入 token，供 AOP 权限校验使用）
+        String token = jwtUtil.generateToken(user.getId(), user.getRole());
         LoginVO loginVO = new LoginVO(token, maskPassword(user));
 
         return Result.success(loginVO);
@@ -108,6 +108,7 @@ public class UserServiceImpl implements UserService {
         safe.setEmail(user.getEmail());
         safe.setPhone(user.getPhone());
         safe.setCreateTime(user.getCreateTime());
+        safe.setRole(user.getRole());
         return safe;
     }
 

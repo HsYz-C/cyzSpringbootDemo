@@ -30,7 +30,7 @@ class JwtUtilTest {
         System.out.println("========== 测试点1：生成 Token ==========");
         System.out.println("【输入】userId = 1");
 
-        String token = jwtUtil.generateToken(1L);
+        String token = jwtUtil.generateToken(1L, "USER");
 
         String[] parts = token.split("\\.");
         String header = new String(Base64.getUrlDecoder().decode(parts[0]));
@@ -51,7 +51,7 @@ class JwtUtilTest {
     void testValidateToken_valid() {
         System.out.println("========== 测试点2：合法 Token 验证 ==========");
         System.out.println("【步骤1】用 userId=1 生成合法 Token");
-        String token = jwtUtil.generateToken(1L);
+        String token = jwtUtil.generateToken(1L, "USER");
         System.out.println("【Token】" + token);
 
         System.out.println("【步骤2】用同一密钥重新计算签名，与 Token 末尾对比");
@@ -89,7 +89,7 @@ class JwtUtilTest {
         Long userId = 5L;
         System.out.println("【步骤1】存入 userId = " + userId);
 
-        String token = jwtUtil.generateToken(userId);
+        String token = jwtUtil.generateToken(userId, "USER");
         String payload = new String(Base64.getUrlDecoder().decode(token.split("\\.")[1]));
         System.out.println("【步骤2】生成 Token，Payload = " + payload);
         System.out.println("【步骤3】validateToken 验签通过，取 Payload");
@@ -118,5 +118,20 @@ class JwtUtilTest {
         System.out.println("【返回值】" + parsed + " → " + (parsed == null ? "✅ 通过（返回 null）" : "❌ 失败"));
 
         assertNull(parsed);
+    }
+
+    // 测试点6：Token 中写入并解析角色
+    @Test
+    void testGetRoleFromToken() {
+        System.out.println("========== 测试点6：解析角色 ==========");
+
+        String token = jwtUtil.generateToken(1L, "ADMIN");
+        String role = jwtUtil.getRoleFromToken(token);
+
+        System.out.println("【步骤1】用 userId=1、role=ADMIN 生成 Token");
+        System.out.println("【步骤2】解析出的角色 = " + role);
+        System.out.println("【断言】role == ADMIN → " + ("ADMIN".equals(role) ? "✅ 通过" : "❌ 失败"));
+
+        assertEquals("ADMIN", role);
     }
 }

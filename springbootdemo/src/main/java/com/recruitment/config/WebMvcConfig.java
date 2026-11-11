@@ -24,7 +24,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(             // 白名单（无需登录）
                         "/users/login",
                         "/users/register",
-                        "/jobs/**",
+                        // 职位查询公开；数字 id 的详情也公开，/job/add 与 /job/delete/{id} 仍需登录
+                        "/job/list",
+                        "/job/{id:[0-9]+}",
                         "/hello/**",
                         "/files/upload",
                         "/uploads/**",            // 图片资源访问路径

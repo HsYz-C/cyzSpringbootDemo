@@ -38,4 +38,7 @@ public class User {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
+
+    @Schema(description = "角色：USER/ADMIN")
+    private String role;
 }

@@ -15,6 +15,7 @@ CREATE TABLE `user` (
                         `email` VARCHAR(100) DEFAULT NULL COMMENT '邮箱',
                         `phone` VARCHAR(20) DEFAULT NULL COMMENT '手机号',
                         `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                        `role` VARCHAR(20) NOT NULL DEFAULT 'USER' COMMENT '角色：USER/ADMIN',
                         PRIMARY KEY (`id`),
                         UNIQUE KEY `uk_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
@@ -93,6 +94,10 @@ CREATE TABLE `application` (
 -- 用户：demo / 123456
 INSERT INTO `user` (`id`, `username`, `password`, `nickname`, `email`, `phone`) VALUES
     (1, 'demo', '123456', '示例用户', 'demo@example.com', '13800000000');
+
+-- 课堂测试账号：recruiterA / 123456，角色 Recruiter（BCrypt 加密后的密码）
+INSERT INTO `user` (`username`, `password`, `nickname`, `role`) VALUES
+    ('recruiterA', '$2a$10$3x0AWERheg14OBuqpoViIuzsgtAlMAXV582AoBYpLMnbrK2ykLk4q', '招聘专员', 'Recruiter');
 
 -- 职位：阿里、腾讯、字节
 INSERT INTO `job` (`id`, `company_name`, `company_logo`, `company_intro`, `job_title`, `job_type`, `salary`, `city`, `address`, `experience`, `education`, `job_desc`, `job_requirement`, `welfare`, `contact_name`, `contact_phone`, `view_count`, `apply_count`) VALUES

@@ -57,4 +57,25 @@ public class JobServiceImpl implements JobService {
 
         return Result.success(job);
     }
+
+    /**
+     * 新增工作岗位
+     */
+    @Override
+    public Result<Job> add(Job job) {
+        jobMapper.insert(job);
+        return Result.success(job);
+    }
+
+    /**
+     * 删除工作岗位
+     */
+    @Override
+    public Result<Void> delete(Long id) {
+        int rows = jobMapper.deleteById(id);
+        if (rows == 0) {
+            return Result.error(404, "岗位不存在");
+        }
+        return Result.success(null);
+    }
 }
