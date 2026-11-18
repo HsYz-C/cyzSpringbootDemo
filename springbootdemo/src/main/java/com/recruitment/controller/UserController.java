@@ -7,6 +7,7 @@ import com.recruitment.service.UserService;
 import com.recruitment.vo.LoginVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,7 +36,7 @@ public class UserController {
      */
     @Operation(summary = "用户注册", description = "新用户注册账号")
     @PostMapping("/register")
-    public Result<User> register(@RequestBody User request) {
+    public Result<User> register(@Valid @RequestBody User request) {
         return userService.register(request);
     }
 
@@ -45,7 +46,7 @@ public class UserController {
      */
     @Operation(summary = "用户登录", description = "登录成功后返回 JWT Token 和用户信息")
     @PostMapping("/login")
-    public Result<LoginVO> login(@RequestBody User request) {
+    public Result<LoginVO> login(@Valid @RequestBody User request) {
         return userService.login(request);
     }
 

@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -25,12 +28,16 @@ public class Application {
     private Long id;
 
     @Schema(description = "用户ID")
+    @NotNull(message = "用户ID不能为空")
     private Long userId;
 
     @Schema(description = "职位ID")
+    @NotNull(message = "职位ID不能为空")
     private Long jobId;
 
     @Schema(description = "状态：0-已投递，1-已取消")
+    @Min(value = 0, message = "状态只能是0或1")
+    @Max(value = 1, message = "状态只能是0或1")
     private int status;
 
     @Schema(description = "投递时间")

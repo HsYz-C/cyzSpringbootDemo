@@ -4,10 +4,13 @@ import com.recruitment.annotation.RequireRole;
 import com.recruitment.common.Result;
 import com.recruitment.model.Resume;
 import com.recruitment.service.ResumeService;
+import com.recruitment.validation.CreateGroup;
+import com.recruitment.validation.UpdateGroup;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,7 +35,7 @@ public class ResumeController {
      */
     @Operation(summary = "创建简历", description = "为指定用户创建简历")
     @PostMapping
-    public Result<Resume> create(@RequestBody Resume resume) {
+    public Result<Resume> create(@Validated(CreateGroup.class) @RequestBody Resume resume) {
         return resumeService.create(resume);
     }
 
@@ -57,7 +60,7 @@ public class ResumeController {
     public Result<Resume> update(
             @Parameter(description = "简历ID", example = "1")
             @PathVariable Long id,
-            @RequestBody Resume resume) {
+            @Validated(UpdateGroup.class) @RequestBody Resume resume) {
         return resumeService.update(id, resume);
     }
 
