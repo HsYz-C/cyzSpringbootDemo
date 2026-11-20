@@ -7,10 +7,12 @@ import com.recruitment.mapper.UserMapper;
 import com.recruitment.model.Resume;
 import com.recruitment.model.User;
 import com.recruitment.service.ResumeService;
+import com.recruitment.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,6 +29,15 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private RedisUtil redisUtil;
+
+    // 缓存key前缀
+    private static final String CACHE_RESUME_DETAIL = "resume:detail:";
+    private static final String CACHE_RESUME_LIST = "resume:list:";
+    // 缓存过期时间（秒）
+    private static final long CACHE_EXPIRE = 300;
 
     @Override
     public Result<Resume> create(Resume resume) {
@@ -47,6 +58,9 @@ public class ResumeServiceImpl implements ResumeService {
         resume.setUpdateTime(LocalDateTime.now());
         resumeMapper.insert(resume);
 
+        // 新增后清空该用户的简历列表缓存
+        redisUtil.delete(CACHE_RESUME_LIST + resume.getUserId());
+
         return Result.success("创建成功", resume);
     }
 
@@ -56,10 +70,20 @@ public class ResumeServiceImpl implements ResumeService {
             return Result.error("简历ID不能为空");
         }
 
+        // 先从缓存获取
+        String cacheKey = CACHE_RESUME_DETAIL + id;
+        Object cached = redisUtil.get(cacheKey);
+        if (cached instanceof Resume) {
+            return Result.success((Resume) cached);
+        }
+
         Resume resume = resumeMapper.selectById(id);
         if (resume == null) {
             return Result.error("简历不存在");
         }
+
+        // 存入缓存
+        redisUtil.set(cacheKey, resume, CACHE_EXPIRE);
 
         return Result.success(resume);
     }
@@ -112,6 +136,10 @@ public class ResumeServiceImpl implements ResumeService {
         existing.setUpdateTime(LocalDateTime.now());
         resumeMapper.updateById(existing);
 
+        // 更新后清空详情和列表缓存
+        redisUtil.delete(CACHE_RESUME_DETAIL + id);
+        redisUtil.delete(CACHE_RESUME_LIST + existing.getUserId());
+
         return Result.success("更新成功", existing);
     }
 
@@ -127,13 +155,29 @@ public class ResumeServiceImpl implements ResumeService {
         }
 
         resumeMapper.deleteById(id);
+
+        // 删除后清空详情和列表缓存
+        redisUtil.delete(CACHE_RESUME_DETAIL + id);
+        redisUtil.delete(CACHE_RESUME_LIST + resume.getUserId());
+
         return Result.success("删除成功", null);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Result<List<Resume>> listByUserId(Long userId) {
         if (userId == null) {
             return Result.error("用户ID不能为空");
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_RESUME_LIST + userId;
+        Object cached = redisUtil.get(cacheKey);
+        if (cached instanceof List) {
+            List<Resume> list = (List<Resume>) cached;
+            return list.isEmpty()
+                    ? Result.success("该用户暂无简历", list)
+                    : Result.success("查询成功", list);
         }
 
         // 任务10：用户不存在、或用户存在但没有简历时，都返回空列表 + 清晰的无数据提示，
@@ -147,9 +191,15 @@ public class ResumeServiceImpl implements ResumeService {
         LambdaQueryWrapper<Resume> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Resume::getUserId, userId);
         List<Resume> resumes = resumeMapper.selectList(wrapper);
+        if (resumes == null) {
+            resumes = Collections.emptyList();
+        }
 
-        if (resumes == null || resumes.isEmpty()) {
-            return Result.success("该用户暂无简历", Collections.emptyList());
+        // 存入缓存（用 ArrayList 便于 JSON 反序列化）
+        redisUtil.set(cacheKey, new ArrayList<>(resumes), CACHE_EXPIRE);
+
+        if (resumes.isEmpty()) {
+            return Result.success("该用户暂无简历", resumes);
         }
 
         return Result.success("查询成功", resumes);

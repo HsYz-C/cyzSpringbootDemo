@@ -9,6 +9,7 @@ import com.recruitment.model.Favorite;
 import com.recruitment.model.Job;
 import com.recruitment.model.User;
 import com.recruitment.service.FavoriteService;
+import com.recruitment.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,14 @@ public class FavoriteServiceImpl implements FavoriteService {
 
     @Autowired
     private JobMapper jobMapper;
+
+    @Autowired
+    private RedisUtil redisUtil;
+
+    // 缓存key前缀
+    private static final String CACHE_FAVORITE_LIST = "favorite:list:";
+    // 缓存过期时间（秒）
+    private static final long CACHE_EXPIRE = 300;
 
     @Override
     public Result<String> add(Long userId, Long jobId) {
@@ -60,6 +69,9 @@ public class FavoriteServiceImpl implements FavoriteService {
         favorite.setCreateTime(LocalDateTime.now());
         favoriteMapper.insert(favorite);
 
+        // 新增后清空该用户的收藏列表缓存
+        redisUtil.delete(CACHE_FAVORITE_LIST + userId);
+
         return Result.success("收藏成功", null);
     }
 
@@ -79,13 +91,25 @@ public class FavoriteServiceImpl implements FavoriteService {
         }
 
         favoriteMapper.deleteById(target.getId());
+
+        // 取消收藏后清空该用户的收藏列表缓存
+        redisUtil.delete(CACHE_FAVORITE_LIST + userId);
+
         return Result.success("取消收藏成功", null);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Result<List<Job>> listByUser(Long userId) {
         if (userId == null) {
             return Result.error("用户ID不能为空");
+        }
+
+        // 先从缓存获取
+        String cacheKey = CACHE_FAVORITE_LIST + userId;
+        Object cached = redisUtil.get(cacheKey);
+        if (cached instanceof List) {
+            return Result.success((List<Job>) cached);
         }
 
         if (userMapper.selectById(userId) == null) {
@@ -105,6 +129,10 @@ public class FavoriteServiceImpl implements FavoriteService {
                 jobs.add(job);
             }
         }
+
+        // 存入缓存
+        redisUtil.set(cacheKey, jobs, CACHE_EXPIRE);
+
         return Result.success(jobs);
     }
 }

@@ -6,6 +6,7 @@ import com.recruitment.mapper.UserMapper;
 import com.recruitment.model.User;
 import com.recruitment.service.UserService;
 import com.recruitment.util.JwtUtil;
+import com.recruitment.util.RedisUtil;
 import com.recruitment.vo.LoginVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -28,6 +29,14 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private RedisUtil redisUtil;
+
+    // 缓存key前缀
+    private static final String CACHE_USER_INFO = "user:info:";
+    // 缓存过期时间（秒）
+    private static final long CACHE_EXPIRE = 300;
 
     @Override
     public Result<User> register(User request) {
@@ -90,11 +99,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Result<User> getUserInfo(Long userId) {
+        // 先从缓存获取
+        String cacheKey = CACHE_USER_INFO + userId;
+        Object cached = redisUtil.get(cacheKey);
+        if (cached instanceof User) {
+            return Result.success((User) cached);
+        }
+
         User user = userMapper.selectById(userId);  // 根据ID查询
         if (user == null) {
             return Result.error("用户不存在");
         }
-        return Result.success(maskPassword(user));
+
+        User safe = maskPassword(user);
+        // 存入缓存
+        redisUtil.set(cacheKey, safe, CACHE_EXPIRE);
+        return Result.success(safe);
     }
 
     /**

@@ -9,6 +9,7 @@ import com.recruitment.model.Application;
 import com.recruitment.model.Job;
 import com.recruitment.model.User;
 import com.recruitment.service.ApplicationService;
+import com.recruitment.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,14 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private JobMapper jobMapper;
+
+    @Autowired
+    private RedisUtil redisUtil;
+
+    // 缓存key前缀（key 后缀为 userId:status）
+    private static final String CACHE_APPLICATION_LIST = "application:list:";
+    // 缓存过期时间（秒）
+    private static final long CACHE_EXPIRE = 300;
 
     @Override
     public Result<String> apply(Long userId, Long jobId) {
@@ -63,6 +72,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
             job.setApplyCount(job.getApplyCount() + 1);
             jobMapper.updateById(job);
+
+            // 投递状态变化，清空该用户的投递列表缓存
+            clearApplicationListCache(userId);
             return Result.success("重新投递成功", null);
         }
 
@@ -77,6 +89,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         // 投递次数 +1
         job.setApplyCount(job.getApplyCount() + 1);
         jobMapper.updateById(job);
+
+        // 投递状态变化，清空该用户的投递列表缓存
+        clearApplicationListCache(userId);
 
         return Result.success("投递成功", null);
     }
@@ -108,6 +123,9 @@ public class ApplicationServiceImpl implements ApplicationService {
             jobMapper.updateById(job);
         }
 
+        // 投递状态变化，清空该用户的投递列表缓存
+        clearApplicationListCache(userId);
+
         return Result.success("取消投递成功", null);
     }
 
@@ -123,12 +141,31 @@ public class ApplicationServiceImpl implements ApplicationService {
      * 查询投递记录，可按用户和状态过滤（参数为 null 时该条件不参与筛选）
      */
     @Override
+    @SuppressWarnings("unchecked")
     public Result<List<Map<String, Object>>> listDetail(Long userId, Integer status) {
+        // 构建缓存key，带上 status 避免不同状态查询互相串数据
+        String cacheKey = CACHE_APPLICATION_LIST + userId + ":" + status;
+
+        // 先从缓存获取
+        Object cached = redisUtil.get(cacheKey);
+        if (cached instanceof List) {
+            return Result.success((List<Map<String, Object>>) cached);
+        }
+
         // 投递记录 + 用户 + 职位信息的联表查询，SQL 见 mapper/ApplicationMapper.xml
         // userId 为空查询全部用户的投递记录，status 为空不按状态过滤
         List<Map<String, Object>> list = applicationMapper.listDetail(userId, status);
+
+        // 存入缓存
+        redisUtil.set(cacheKey, list, CACHE_EXPIRE);
+
         return Result.success(list);
     }
 
-
+    /**
+     * 清空某个用户的全部投递列表缓存（不同 status 都清）
+     */
+    private void clearApplicationListCache(Long userId) {
+        redisUtil.deleteByPattern(CACHE_APPLICATION_LIST + userId + ":*");
+    }
 }
